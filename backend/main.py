@@ -152,18 +152,7 @@ def health():
 if os.path.exists(FRONTEND_DIR):
     app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")
 
-# Catch-all route to serve the React index.html for any non-API route
-@app.get("/{full_path:path}")
-async def serve_frontend(full_path: str):
-    # If the path starts with api/, it should have been caught by other routes
-    if full_path.startswith("api/"):
-        raise HTTPException(status_code=404, detail="API route not found")
-        
-    index_file = os.path.join(FRONTEND_DIR, "index.html")
-    if os.path.exists(index_file):
-        return FileResponse(index_file)
-    
-    return {"message": "Welcome to RealTicker API. Frontend not found. Run 'npm run build' in the frontend folder."}
+
 
 
 @app.get("/api/stocks/top10", response_model=List[Stock])
@@ -275,10 +264,18 @@ def analyze_stock(ticker: str, body: AnalyzeRequest):
         elif trend == "Upward" and risk == "Low":
             suggestion = "Short-term"
 
-    return AnalysisResult(
-        ticker=ticker,
-        trend=trend,
-        risk=risk,
-        suggestion=suggestion,
-        summary=raw_response if raw_response else "Analysis generated via heuristic fallback.",
     )
+
+# Catch-all route to serve the React index.html for any non-API route
+# This must be at the very bottom of the file
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API route not found")
+        
+    index_file = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    
+    return {"message": "RealTicker API is running. Frontend assets not discovered."}
+
