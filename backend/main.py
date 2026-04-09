@@ -48,6 +48,11 @@ HF_API_TOKEN = os.getenv("HF_API_TOKEN", "")  # Loaded from .env file
 # Pydantic models
 # ──────────────────────────────────────────────
 
+class HistoryPoint(BaseModel):
+    date: str
+    price: float
+
+
 class Stock(BaseModel):
     ticker: str
     company: str
@@ -56,10 +61,6 @@ class Stock(BaseModel):
     volume: int
     history: Optional[List[HistoryPoint]] = None
 
-
-class HistoryPoint(BaseModel):
-    date: str
-    price: float
 
 
 class AnalyzeRequest(BaseModel):
