@@ -15,6 +15,8 @@ from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
 # ──────────────────────────────────────────────
@@ -137,9 +139,31 @@ def _query_huggingface(prompt: str) -> str:
 # Endpoints
 # ──────────────────────────────────────────────
 
-@app.get("/")
-def root():
-    return {"message": "Welcome to RealTicker API", "docs": "/docs"}
+# Get the path to the built frontend
+# backend/main.py -> backend -> parent (root) -> frontend -> dist
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+FRONTEND_DIR = os.path.join(BASE_DIR, "frontend", "dist")
+
+@app.get("/api/health")
+def health():
+    return {"status": "ok"}
+
+# Mount frontend assets
+if os.path.exists(FRONTEND_DIR):
+    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIR, "assets")), name="assets")
+
+# Catch-all route to serve the React index.html for any non-API route
+@app.get("/{full_path:path}")
+async def serve_frontend(full_path: str):
+    # If the path starts with api/, it should have been caught by other routes
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="API route not found")
+        
+    index_file = os.path.join(FRONTEND_DIR, "index.html")
+    if os.path.exists(index_file):
+        return FileResponse(index_file)
+    
+    return {"message": "Welcome to RealTicker API. Frontend not found. Run 'npm run build' in the frontend folder."}
 
 
 @app.get("/api/stocks/top10", response_model=List[Stock])
