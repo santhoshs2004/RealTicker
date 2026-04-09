@@ -264,6 +264,12 @@ def analyze_stock(ticker: str, body: AnalyzeRequest):
         elif trend == "Upward" and risk == "Low":
             suggestion = "Short-term"
 
+    return AnalysisResult(
+        ticker=ticker,
+        trend=trend,
+        risk=risk,
+        suggestion=suggestion,
+        summary=raw_response if raw_response else "Analysis generated via heuristic fallback.",
     )
 
 # Catch-all route to serve the React index.html for any non-API route
@@ -278,4 +284,5 @@ async def serve_frontend(full_path: str):
         return FileResponse(index_file)
     
     return {"message": "RealTicker API is running. Frontend assets not discovered."}
+
 
